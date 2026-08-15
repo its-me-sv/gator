@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log"
 )
 
 func handlerLogin(s *state, cmd command) error {
@@ -11,6 +13,9 @@ func handlerLogin(s *state, cmd command) error {
 	}
 
 	username := cmd.args[0]
+	if _, err := s.db.GetUser(context.Background(), username); err != nil {
+		log.Fatalf("user with name \"%s\" doesn't exist\n", username)
+	}
 	if err := s.cfg.SetUser(username); err != nil {
 		return err
 	}

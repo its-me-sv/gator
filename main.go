@@ -1,13 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"os"
 
 	"github.com/its-me-sv/gator/internal/config"
+	"github.com/its-me-sv/gator/internal/database"
+	_ "github.com/lib/pq"
 )
 
 type state struct {
+	db  *database.Queries
 	cfg *config.Config
 }
 
@@ -17,14 +21,22 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	db, err := sql.Open("postgres", cfg.DbURL)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	dbQueriues := database.New(db)
+
 	appState := state{
 		cfg: &cfg,
+		db:  dbQueriues,
 	}
 
 	appCmds := commands{
 		cmdHandlers: make(map[string]func(*state, command) error),
 	}
 	appCmds.register("login", handlerLogin)
+	appCmds.register("register", handlerRegister)
 
 	args := os.Args
 	if len(args) < 2 {
