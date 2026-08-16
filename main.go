@@ -42,6 +42,8 @@ func main() {
 	appCmds.register("agg", handlerAgg)
 	appCmds.register("addfeed", handlerAddFeed)
 	appCmds.register("feeds", handlerListFeeds)
+	appCmds.register("follow", handlerFeedFollow)
+	appCmds.register("following", handlerFeedFollowedByUser)
 
 	args := os.Args
 	if len(args) < 2 {
