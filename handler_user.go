@@ -60,8 +60,8 @@ func handlerReset(s *state, cmd command) error {
 		return errors.New("too many arguments")
 	}
 
-	if err := s.db.DeleteAll(context.Background()); err != nil {
-		log.Fatalln("unable to reset. try again!!")
+	if err := s.db.DeleteUsers(context.Background()); err != nil {
+		log.Fatalf("unable to delete all users: %v\n", err)
 	}
 
 	fmt.Println("reset success")
