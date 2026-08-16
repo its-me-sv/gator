@@ -55,6 +55,27 @@ func handlerLogin(s *state, cmd command) error {
 	return nil
 }
 
+func handlerListUsers(s *state, cmd command) error {
+	if len(cmd.args) != 0 {
+		return errors.New("too many arguments")
+	}
+
+	users, err := s.db.GetUsers(context.Background())
+	if err != nil {
+		log.Fatalf("unable to fetch all users: %v\n", err)
+	}
+
+	for _, user := range users {
+		fmt.Printf("* %s", user.Name)
+		if user.Name == s.cfg.CurrentUserName {
+			fmt.Printf(" (current)")
+		}
+		fmt.Println()
+	}
+
+	return nil
+}
+
 func handlerReset(s *state, cmd command) error {
 	if len(cmd.args) != 0 {
 		return errors.New("too many arguments")
