@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -39,5 +40,21 @@ func handlerAddFeed(s *state, cmd command) error {
 	fmt.Printf("feed \"%s\" was created\n", cmd.args[0])
 	fmt.Printf("%+v\n", dbFeed)
 
+	return nil
+}
+
+func handlerListFeeds(s *state, cmd command) error {
+	if len(cmd.args) != 0 {
+		return errors.New("too many arguments")
+	}
+
+	feeds, err := s.db.GetFeeds(context.Background())
+	if err != nil {
+		log.Fatalf("unable to fetch all feeds: %v\n", err)
+	}
+
+	for _, feed := range feeds {
+		fmt.Printf("Name: %s | Url: %s | Created by: %s\n", feed.Name, feed.Url, feed.UserName)
+	}
 	return nil
 }

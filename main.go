@@ -41,6 +41,7 @@ func main() {
 	appCmds.register("users", handlerListUsers)
 	appCmds.register("agg", handlerAgg)
 	appCmds.register("addfeed", handlerAddFeed)
+	appCmds.register("feeds", handlerListFeeds)
 
 	args := os.Args
 	if len(args) < 2 {
