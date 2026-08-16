@@ -40,6 +40,7 @@ func main() {
 	appCmds.register("reset", handlerReset)
 	appCmds.register("users", handlerListUsers)
 	appCmds.register("agg", handlerAgg)
+	appCmds.register("addfeed", handlerAddFeed)
 
 	args := os.Args
 	if len(args) < 2 {
@@ -51,8 +52,7 @@ func main() {
 		args: args[2:],
 	}
 
-	err = appCmds.run(&appState, cmd)
-	if err != nil {
+	if err = appCmds.run(&appState, cmd); err != nil {
 		log.Fatalln(err)
 	}
 }
