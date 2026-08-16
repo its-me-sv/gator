@@ -37,6 +37,7 @@ func main() {
 	}
 	appCmds.register("login", handlerLogin)
 	appCmds.register("register", handlerRegister)
+	appCmds.register("reset", handlerReset)
 
 	args := os.Args
 	if len(args) < 2 {

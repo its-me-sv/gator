@@ -54,3 +54,16 @@ func handlerLogin(s *state, cmd command) error {
 	fmt.Printf("user has been set to \"%s\"\n", username)
 	return nil
 }
+
+func handlerReset(s *state, cmd command) error {
+	if len(cmd.args) != 0 {
+		return errors.New("too many arguments")
+	}
+
+	if err := s.db.DeleteAll(context.Background()); err != nil {
+		log.Fatalln("unable to reset. try again!!")
+	}
+
+	fmt.Println("reset success")
+	return nil
+}
