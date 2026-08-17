@@ -53,7 +53,7 @@ func handlerFeedsFollowedByUser(s *state, cmd command, currUser database.User) e
 	return nil
 }
 
-func handlerUnfollowFeedFollowedByUser(s *state, cmd command, currUsser database.User) error {
+func handlerUnfollowFeedFollowedByUser(s *state, cmd command, currUser database.User) error {
 	if len(cmd.args) < 1 {
 		return errors.New("missing argument <url>")
 	}
@@ -66,7 +66,7 @@ func handlerUnfollowFeedFollowedByUser(s *state, cmd command, currUsser database
 
 	unFollowFeedParams := database.DeleteFeedFollowedParams{
 		FeedID: dbFeed.ID,
-		UserID: currUsser.ID,
+		UserID: currUser.ID,
 	}
 
 	if err = s.db.DeleteFeedFollowed(context.Background(), unFollowFeedParams); err != nil {

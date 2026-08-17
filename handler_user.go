@@ -33,7 +33,7 @@ func handlerRegister(s *state, cmd command) error {
 	}
 
 	fmt.Printf("user \"%s\" was created\n", name)
-	fmt.Printf("%+v\n", dbUser)
+	printUser(dbUser)
 
 	return nil
 }

@@ -45,7 +45,7 @@ func handlerAddFeed(s *state, cmd command, currUser database.User) error {
 	}
 
 	fmt.Printf("feed \"%s\" was created and followed\n", cmd.args[0])
-	fmt.Printf("%+v\n", dbFeed)
+	printFeed(dbFeed)
 
 	return nil
 }

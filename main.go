@@ -27,6 +27,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	defer db.Close()
 	dbQueriues := database.New(db)
 
 	appState := state{

@@ -25,8 +25,11 @@ func handlerListPostsForUser(s *state, cmd command, currUser database.User) erro
 		return err
 	}
 
-	for _, post := range posts {
-		fmt.Printf("%+v\n", post)
+	for idx, post := range posts {
+		if idx > 0 {
+			fmt.Println()
+		}
+		printPost(post)
 	}
 	return nil
 }

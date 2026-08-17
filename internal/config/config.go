@@ -56,5 +56,5 @@ func write(cfg Config) error {
 		return err
 	}
 
-	return os.WriteFile(filePath, dataToWrite, 0666)
+	return os.WriteFile(filePath, dataToWrite, 0600)
 }
