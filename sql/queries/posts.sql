@@ -15,19 +15,15 @@ VALUES
 
 -- name: PostsForUser :many
 SELECT
-  *
+  posts.*,
+  feeds.name AS feed_name
 FROM
   posts
+  JOIN feed_follows ON feed_follows.feed_id = posts.feed_id
+  JOIN feeds ON posts.feed_id = feeds.id
 WHERE
-  feed_id IN (
-    SELECT
-      id
-    FROM
-      feed_follows
-    WHERE
-      feed_follows.user_id = $1
-  )
+  feed_follows.user_id = $1
 ORDER BY
-  published_at DESC NULLS LAST
+  posts.published_at DESC
 LIMIT
   $2;

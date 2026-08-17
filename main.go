@@ -47,6 +47,7 @@ func main() {
 	appCmds.register("follow", middlewareLoggedIn(handlerFeedFollow))
 	appCmds.register("following", middlewareLoggedIn(handlerFeedsFollowedByUser))
 	appCmds.register("unfollow", middlewareLoggedIn(handlerUnfollowFeedFollowedByUser))
+	appCmds.register("browse", middlewareLoggedIn(handlerListPostsForUser))
 
 	args := os.Args
 	if len(args) < 2 {

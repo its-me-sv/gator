@@ -2,8 +2,13 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/its-me-sv/gator/internal/database"
 )
 
 func handlerAgg(s *state, cmd command) error {
@@ -47,7 +52,33 @@ func scrapeFeeds(s *state) error {
 	}
 
 	for _, feedItem := range feedContent.Channel.Item {
-		fmt.Printf("%s\n", feedItem.Title)
+		pubDate := sql.NullTime{}
+		if parsedPubDate, err := time.Parse(time.RFC1123Z, feedItem.PubDate); err != nil {
+			pubDate = sql.NullTime{
+				Time:  parsedPubDate,
+				Valid: true,
+			}
+		}
+
+		postParams := database.CreatePostParams{
+			ID:        uuid.New(),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+			Title:     feedItem.Title,
+			Url:       feedItem.Link,
+			Description: sql.NullString{
+				String: feedItem.Description,
+				Valid:  true,
+			},
+			PublishedAt: pubDate,
+			FeedID:      nextFeed.ID,
+		}
+		if _, err = s.db.CreatePost(context.Background(), postParams); err != nil {
+			if strings.Contains(err.Error(), "duplicate") {
+				continue
+			}
+			fmt.Printf("failed to create post: %v\n", err)
+		}
 	}
 
 	return nil

@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,8 +35,8 @@ type CreatePostParams struct {
 	UpdatedAt   time.Time
 	Title       string
 	Url         string
-	Description string
-	PublishedAt time.Time
+	Description sql.NullString
+	PublishedAt sql.NullTime
 	FeedID      uuid.UUID
 }
 
@@ -66,20 +67,16 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, e
 
 const postsForUser = `-- name: PostsForUser :many
 SELECT
-  id, created_at, updated_at, title, url, description, published_at, feed_id
+  posts.id, posts.created_at, posts.updated_at, posts.title, posts.url, posts.description, posts.published_at, posts.feed_id,
+  feeds.name AS feed_name
 FROM
   posts
+  JOIN feed_follows ON feed_follows.feed_id = posts.feed_id
+  JOIN feeds ON posts.feed_id = feeds.id
 WHERE
-  feed_id IN (
-    SELECT
-      id
-    FROM
-      feed_follows
-    WHERE
-      feed_follows.user_id = $1
-  )
+  feed_follows.user_id = $1
 ORDER BY
-  published_at DESC NULLS LAST
+  posts.published_at DESC
 LIMIT
   $2
 `
@@ -89,15 +86,27 @@ type PostsForUserParams struct {
 	Limit  int32
 }
 
-func (q *Queries) PostsForUser(ctx context.Context, arg PostsForUserParams) ([]Post, error) {
+type PostsForUserRow struct {
+	ID          uuid.UUID
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Title       string
+	Url         string
+	Description sql.NullString
+	PublishedAt sql.NullTime
+	FeedID      uuid.UUID
+	FeedName    string
+}
+
+func (q *Queries) PostsForUser(ctx context.Context, arg PostsForUserParams) ([]PostsForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, postsForUser, arg.UserID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Post
+	var items []PostsForUserRow
 	for rows.Next() {
-		var i Post
+		var i PostsForUserRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,
@@ -107,6 +116,7 @@ func (q *Queries) PostsForUser(ctx context.Context, arg PostsForUserParams) ([]P
 			&i.Description,
 			&i.PublishedAt,
 			&i.FeedID,
+			&i.FeedName,
 		); err != nil {
 			return nil, err
 		}
