@@ -10,7 +10,7 @@ import (
 	"github.com/its-me-sv/gator/internal/database"
 )
 
-func handlerFeedFollow(s *state, cmd command) error {
+func handlerFeedFollow(s *state, cmd command, currUser database.User) error {
 	if len(cmd.args) < 1 {
 		return errors.New("missing argument <url>")
 	}
@@ -19,10 +19,6 @@ func handlerFeedFollow(s *state, cmd command) error {
 	dbFeed, err := s.db.GetFeed(context.Background(), url)
 	if err != nil {
 		return errors.New("feed not found")
-	}
-	currUser, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
-	if err != nil {
-		return errors.New("user not found")
 	}
 
 	feedFollow := database.CreateFeedFollowParams{
@@ -40,15 +36,11 @@ func handlerFeedFollow(s *state, cmd command) error {
 	return nil
 }
 
-func handlerFeedsFollowedByUser(s *state, cmd command) error {
+func handlerFeedsFollowedByUser(s *state, cmd command, currUser database.User) error {
 	if len(cmd.args) > 0 {
 		return errors.New("too many arguments")
 	}
 
-	currUser, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
-	if err != nil {
-		return errors.New("user not found")
-	}
 	followedFeeds, err := s.db.GetFeedFollowsForUser(context.Background(), currUser.ID)
 	if err != nil {
 		return errors.New("unable to get following feeds")

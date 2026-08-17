@@ -40,10 +40,10 @@ func main() {
 	appCmds.register("reset", handlerReset)
 	appCmds.register("users", handlerListUsers)
 	appCmds.register("agg", handlerAgg)
-	appCmds.register("addfeed", handlerAddFeed)
+	appCmds.register("addfeed", middlewareLoggedIn(handlerAddFeed))
 	appCmds.register("feeds", handlerListFeeds)
-	appCmds.register("follow", handlerFeedFollow)
-	appCmds.register("following", handlerFeedsFollowedByUser)
+	appCmds.register("follow", middlewareLoggedIn(handlerFeedFollow))
+	appCmds.register("following", middlewareLoggedIn(handlerFeedsFollowedByUser))
 
 	args := os.Args
 	if len(args) < 2 {

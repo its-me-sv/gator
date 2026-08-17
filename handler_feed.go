@@ -11,7 +11,7 @@ import (
 	"github.com/its-me-sv/gator/internal/database"
 )
 
-func handlerAddFeed(s *state, cmd command) error {
+func handlerAddFeed(s *state, cmd command, currUser database.User) error {
 	if len(cmd.args) == 0 {
 		return errors.New("not enough arguments")
 	}
@@ -19,10 +19,6 @@ func handlerAddFeed(s *state, cmd command) error {
 		return errors.New("missing argument <url>")
 	}
 
-	currUser, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
-	if err != nil {
-		return err
-	}
 	feed := database.CreateFeedParams{
 		ID:        uuid.New(),
 		CreatedAt: time.Now().UTC(),
