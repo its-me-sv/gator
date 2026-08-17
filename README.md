@@ -1,70 +1,48 @@
 # gator
 
-`gator` is a command line RSS feed aggregator. You register users, add RSS feeds,
-follow the feeds you care about, and let a long-running aggregator collect posts
-into Postgres so you can browse them from your terminal.
+A command-line RSS feed aggregator. Register a user, add feeds, follow the ones you care about, and leave the aggregator running to pull posts into Postgres. Read them back from your terminal whenever you want.
+
+Built while working through the [boot.dev](https://boot.dev) Go course.
+
+## Contents
+
+- [Requirements](#requirements)
+- [Setup](#setup)
+- [Usage](#usage)
+- [Commands](#commands)
+- [Tech stack](#tech-stack)
+- [Project layout](#project-layout)
+- [Development](#development)
+- [Notes & warnings](#notes--warnings)
 
 ## Requirements
 
-You need two things installed before you can run `gator`:
+- **Go** 1.26.5+ — to install the CLI.
+- **PostgreSQL** 15+ — where users, feeds, and posts live.
+- **[goose](https://github.com/pressly/goose)** — to run the migrations.
 
-- **Go** (1.26.5 or newer) — needed to install the CLI.
-- **PostgreSQL** (v15 or newer) — `gator` stores users, feeds, and posts there.
+## Setup
 
-Make sure your Postgres server is running and that you can connect to it, for
-example:
-
-```bash
-psql "postgres://postgres:postgres@localhost:5432/gator"
-```
-
-## Install
-
-Install the CLI with `go install`:
+Install the binary:
 
 ```bash
 go install github.com/its-me-sv/gator@latest
 ```
 
-This compiles a standalone `gator` binary into your `$GOBIN` (usually
-`~/go/bin`). Go programs are statically compiled binaries, so once it's
-installed you can run `gator` anywhere — the Go toolchain isn't needed at
-runtime.
-
-If `gator` isn't found afterwards, add your Go bin directory to your `PATH`:
+If the `gator` command isn't found, add Go's bin directory to your `PATH`:
 
 ```bash
 export PATH="$PATH:$(go env GOPATH)/bin"
 ```
 
-> `go run .` from a clone of this repo works too, but that's only for
-> development. `gator` is the thing you actually ship and run.
-
-## Database setup
-
-Create a database for the app:
+Create the database and apply the schema (migrations live in [sql/schema/](sql/schema/), so run this from a clone):
 
 ```bash
 createdb gator
-```
-
-The schema lives in [sql/schema/](sql/schema/) as [goose](https://github.com/pressly/goose)
-migrations. From a clone of the repo, apply them with:
-
-```bash
 goose -dir sql/schema postgres "postgres://postgres:postgres@localhost:5432/gator?sslmode=disable" up
 ```
 
-## Config file
-
-`gator` reads a JSON config file named `.gatorconfig.json` from your home
-directory. Create it yourself:
-
-```bash
-touch ~/.gatorconfig.json
-```
-
-And put your connection string in it:
+Then write `~/.gatorconfig.json`:
 
 ```json
 {
@@ -73,44 +51,81 @@ And put your connection string in it:
 }
 ```
 
-- `db_url` — the Postgres connection string `gator` connects to.
-- `current_user_name` — the logged-in user. Leave it empty; `gator` rewrites
-  this field for you when you `register` or `login`.
+Leave `current_user_name` empty — `gator` rewrites it whenever you `register` or `login`.
 
 ## Usage
-
-Every command is run as `gator <command> [args]`.
-
-Register yourself and add a feed:
 
 ```bash
 gator register lane
 gator addfeed "Boot.dev Blog" https://blog.boot.dev/index.xml
 ```
 
-Then start the aggregator in one terminal and browse in another:
+Start the aggregator in one terminal, browse in another:
 
 ```bash
-gator agg 1m      # runs until you stop it with Ctrl+C
+gator agg 1m      # runs until Ctrl+C
 gator browse 5
 ```
 
-### Commands
+## Commands
 
 | Command | Arguments | What it does |
 | --- | --- | --- |
-| `register` | `<name>` | Creates a new user and logs in as them. |
-| `login` | `<name>` | Switches the current user to an existing user. |
+| `register` | `<name>` | Creates a user and logs in as them. |
+| `login` | `<name>` | Switches to an existing user. |
 | `users` | — | Lists all users, marking the current one. |
-| `reset` | — | Deletes every user (and their feeds, follows, and posts). |
-| `addfeed` | `<name> <url>` | Adds a feed and follows it. Requires a logged-in user. |
-| `feeds` | — | Lists every feed, with the user who added it. |
-| `follow` | `<url>` | Follows an existing feed. Requires a logged-in user. |
-| `following` | — | Lists the feeds the current user follows. |
-| `unfollow` | `<url>` | Unfollows a feed. Requires a logged-in user. |
-| `agg` | `<time_between_reqs>` | Continuously fetches feeds, waiting the given duration between requests (e.g. `10s`, `1m`, `1h`). |
-| `browse` | `[limit]` | Prints the latest posts from feeds you follow (default limit: 2). |
+| `reset` | — | Deletes every user, and their feeds, follows, and posts. |
+| `addfeed` | `<name> <url>` | Adds a feed and follows it. Needs a logged-in user. |
+| `feeds` | — | Lists every feed with the user who added it. |
+| `follow` | `<url>` | Follows an existing feed. Needs a logged-in user. |
+| `following` | — | Lists the feeds you follow. |
+| `unfollow` | `<url>` | Unfollows a feed. Needs a logged-in user. |
+| `agg` | `<time_between_reqs>` | Fetches feeds on a loop, waiting the given duration between requests (`10s`, `1m`, `1h`). |
+| `browse` | `[limit]` | Prints the latest posts from feeds you follow. Defaults to 2. |
 
-`agg` is a long-running process — it keeps scraping the least recently fetched
-feed on every tick until you stop it with `Ctrl+C`. Be polite to the sites you
-scrape and use an interval measured in minutes rather than seconds.
+## Tech stack
+
+- **Go** — the CLI itself, standard library only for HTTP and XML parsing.
+- **PostgreSQL** — storage.
+- **[sqlc](https://sqlc.dev)** — generates type-safe Go from the SQL in
+  [sql/queries/](sql/queries/).
+- **[goose](https://github.com/pressly/goose)** — schema migrations.
+- **[lib/pq](https://github.com/lib/pq)** — Postgres driver.
+- **[google/uuid](https://github.com/google/uuid)** — primary keys.
+
+## Project layout
+
+```text
+main.go                  wiring, command registration, auth middleware
+commands.go              command registry
+handler_*.go             one file per command group (users, feeds, follows, posts, agg)
+rss_feed.go              fetching and parsing RSS
+printers.go              terminal output formatting
+internal/config/         reads and writes ~/.gatorconfig.json
+internal/database/       sqlc-generated code — don't edit by hand
+sql/schema/              goose migrations
+sql/queries/             sqlc query source
+```
+
+## Development
+
+Run straight from a clone instead of installing:
+
+```bash
+go run . users
+```
+
+After changing anything in `sql/queries/` or `sql/schema/`, regenerate the database layer:
+
+```bash
+sqlc generate
+```
+
+New migration files go in `sql/schema/` with a `NNN_name.sql` prefix and the usual goose `-- +goose Up` / `-- +goose Down` markers.
+
+## Notes & warnings
+
+- **`reset` really does delete everything.** No confirmation prompt, no undo. It's there for development.
+- **`agg` is a long-running process.** Every tick it scrapes the least recently fetched feed. Use minutes, not seconds — hammering someone's server will get you blocked, and rightly so.
+- **There's no auth.** `login` just writes a name to your config file, so any user can act as any other. Fine locally, not fine anywhere else.
+- **The connection string sits in plaintext** in `~/.gatorconfig.json`. Don't point it at anything you care about.
