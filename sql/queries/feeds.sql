@@ -20,3 +20,21 @@ FROM
   feeds
 WHERE
   url = $1;
+
+-- name: MarkFeedFetched :exec
+UPDATE feeds
+SET
+  updated_at = NOW () AT TIME ZONE 'UTC',
+  last_fetched_at = NOW () AT TIME ZONE 'UTC'
+WHERE
+  id = $1;
+
+-- name: GetNextFeedToFetch :one
+SELECT
+  *
+FROM
+  feeds
+ORDER BY
+  last_fetched_at DESC NULLS FIRST
+LIMIT
+  1;
