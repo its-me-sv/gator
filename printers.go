@@ -48,8 +48,6 @@ func formatNullTime(nullTime sql.NullTime, fallback string) string {
 	return nullTime.Time.Format(timeLayout)
 }
 
-// formatDescription collapses the whitespace an RSS description usually carries
-// and caps it, so a long entry can't wreck the layout of a browse listing.
 func formatDescription(nullDescription sql.NullString) string {
 	if !nullDescription.Valid {
 		return ""
